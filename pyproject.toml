@@ -1,0 +1,54 @@
+[project]
+name = "vmigrate"
+version = "0.1.0"
+description = "Pluggable vector database migration tool (Qdrant -> Weaviate first)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+qdrant = ["qdrant-client>=1.12"]
+weaviate = ["weaviate-client>=4.16"]
+prometheus = ["prometheus-client>=0.20"]
+all = ["qdrant-client>=1.12", "weaviate-client>=4.16", "prometheus-client>=0.20"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "qdrant-client>=1.12",
+    "weaviate-client>=4.16",
+]
+
+[project.scripts]
+vmigrate = "vmigrate.cli.main:app"
+
+# Adapters are discovered through entry points, so third-party packages can add
+# new sources/sinks without forking this project.
+[project.entry-points."vmigrate.sources"]
+qdrant = "vmigrate.adapters.qdrant.source:QdrantSource"
+memory = "vmigrate.adapters.memory:MemorySource"
+
+[project.entry-points."vmigrate.sinks"]
+weaviate = "vmigrate.adapters.weaviate.sink:WeaviateSink"
+memory = "vmigrate.adapters.memory:MemorySink"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vmigrate"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: requires running Qdrant and Weaviate (docker compose up)"]
+addopts = "-m 'not integration'"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

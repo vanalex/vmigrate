@@ -1,0 +1,38 @@
+source:
+  type: qdrant
+  url: http://localhost:6333
+  api_key: ${QDRANT_API_KEY:-}
+
+target:
+  type: weaviate
+  url: http://localhost:8080
+  grpc_port: 50051
+  api_key: ${WEAVIATE_API_KEY:-}
+
+defaults:
+  batch_size: 500
+  workers: 4
+  max_retries: 3
+  on_error: deadletter        # deadletter | fail
+  sample_size: 200            # points sampled by the schema planner
+
+state:
+  checkpoint_path: .vmigrate/state.db
+  deadletter_dir: .vmigrate/deadletter
+
+observability:
+  prometheus_port: null       # e.g. 9464 to expose /metrics
+
+collections:
+  - source: docs
+    target: Docs
+    ids:
+      keep_source_id_as: qdrant_id
+    vectors:                  # qdrant vector name -> weaviate named vector ("" = unnamed)
+      "": default
+    sparse: drop              # drop | json_property | fail
+    properties:               # overrides for inferred types (target names)
+      created_at: { type: date }
+    rename:
+      user-id: userId
+    transforms: []            # e.g. ["myhooks:clean_text"], run after built-in transforms
