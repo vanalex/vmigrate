@@ -93,9 +93,11 @@ def test_failed_records_go_to_deadletter(config, source, records, tmp_path):
 
 def test_on_error_fail_aborts(config, source):
     config.defaults.on_error = "fail"
-    with build(config, source=source, sink=RejectingSink()) as c:
-        with pytest.raises(MigrationError, match="failed"):
-            c.run.execute(config.mappings(), config.fingerprint())
+    with (
+        build(config, source=source, sink=RejectingSink()) as c,
+        pytest.raises(MigrationError, match="failed"),
+    ):
+        c.run.execute(config.mappings(), config.fingerprint())
 
 
 def test_validate_passes_after_run(container, config, records):

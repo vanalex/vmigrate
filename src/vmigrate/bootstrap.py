@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Self
 
 from vmigrate.adapters.checkpoint import SqliteCheckpointStore
 from vmigrate.adapters.observability import JsonlDeadLetter, NoopMetrics, PrometheusMetrics
@@ -51,7 +52,7 @@ class Container:
         for closable in (self.source, self.sink, self.checkpoints, self.deadletter):
             closable.close()
 
-    def __enter__(self) -> Container:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

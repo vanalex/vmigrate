@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -43,7 +43,7 @@ class Not:
     item: FilterExpr
 
 
-FilterExpr = Union[Match, MatchAny, Range, And, Or, Not]
+FilterExpr = Match | MatchAny | Range | And | Or | Not
 
 
 def parse_filter(obj: dict[str, Any]) -> FilterExpr:

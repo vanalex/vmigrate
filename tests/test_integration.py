@@ -36,15 +36,18 @@ def seeded_qdrant():
 
 
 def test_qdrant_to_weaviate(seeded_qdrant, config):
-    client, name = seeded_qdrant
+    _, name = seeded_qdrant
     target = "It" + name[3:]
     config.collections[0].source = name
     config.collections[0].target = target
     config.collections[0].rename = {}
 
+    # The source gets its own client: `build` closes it on exit, and the fixture still needs
+    # `client` to delete the collection afterwards.
+    source = QdrantSource(url="http://localhost:6333")
     sink = WeaviateSink(url="http://localhost:8080", grpc_port=50051)
     try:
-        with build(config, source=QdrantSource(client=client), sink=sink) as c:
+        with build(config, source=source, sink=sink) as c:
             report = c.run.execute(config.mappings(), config.fingerprint())
             assert report.collections[0].stats.written == 500
 

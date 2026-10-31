@@ -9,6 +9,7 @@ import weaviate
 from weaviate.classes.data import DataObject
 from weaviate.classes.init import Auth
 from weaviate.classes.query import MetadataQuery
+from weaviate.exceptions import WeaviateInsertManyAllFailedError
 
 from vmigrate.adapters.weaviate.capabilities import check_plan
 from vmigrate.adapters.weaviate.filters import to_weaviate
@@ -76,7 +77,13 @@ class WeaviateSink:
             for r in records
         ]
         # insert_many goes through gRPC batch, which upserts by uuid -> reruns are idempotent.
-        result = self._client.collections.use(collection).data.insert_many(objects)
+        try:
+            result = self._client.collections.use(collection).data.insert_many(objects)
+        except WeaviateInsertManyAllFailedError as exc:
+            # Raised instead of a result when every object fails (e.g. retrying only the bad
+            # records). These are per-record errors, not a batch error: report them as such so
+            # the engine dead-letters them. The client keeps only the distinct messages.
+            return WriteResult(written=0, failures=[(r, str(exc)) for r in records])
         failures = [(records[i], err.message) for i, err in result.errors.items()]
         return WriteResult(written=len(records) - len(failures), failures=failures)
 

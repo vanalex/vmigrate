@@ -37,16 +37,19 @@ def _as_datetime(value: Any) -> datetime | None:
         return datetime(value.year, value.month, value.day)
     if isinstance(value, str):
         try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return datetime.fromisoformat(value)  # accepts a trailing "Z" since Python 3.11
         except ValueError:
             return None
     return None
 
 
 def values_equal(a: Any, b: Any) -> bool:
-    if isinstance(a, float) or isinstance(b, float):
-        if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-            return math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-9)
+    if (
+        (isinstance(a, float) or isinstance(b, float))
+        and isinstance(a, (int, float))
+        and isinstance(b, (int, float))
+    ):
+        return math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-9)
     if isinstance(a, (datetime, date)) or isinstance(b, (datetime, date)):
         da, db = _as_datetime(a), _as_datetime(b)
         if da is not None and db is not None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
 from vmigrate.domain.filters import FilterExpr
 
@@ -114,7 +114,7 @@ class RunStats:
     failed: int = 0
     skipped: int = 0
 
-    def __iadd__(self, other: RunStats) -> RunStats:
+    def __iadd__(self, other: RunStats) -> Self:
         self.read += other.read
         self.written += other.written
         self.failed += other.failed
