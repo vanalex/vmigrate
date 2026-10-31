@@ -81,10 +81,108 @@ uv run pytest                    # unit + engine + Qdrant adapter (in-process Qd
 docker compose up -d && uv run pytest -m integration   # real Qdrant -> Weaviate
 ```
 
-## Roadmap / TODOs
+## Roadmap
 
-- Parallel Qdrant scroll by id range (`QdrantSource.shards`)
-- Random sampling across the collection for schema inference and validation
-- Carry HNSW params and quantization over to Weaviate
-- Native Weaviate multi-tenancy from a payload field
-- Dead-letter replay command
+### Known limitations
+
+- **Single read stream.** `QdrantSource.shards` always returns one cursor, so `workers` has no
+  effect for Qdrant. Inside a shard, reads and writes take turns: the next batch isn't read until
+  the current write finishes.
+- **First-batch sampling.** `PlanMigration.sample` reads the first `sample_size` points in ID
+  order. With auto-schema off, fields that first appear later in the collection send those
+  records to the dead-letter file.
+- **Validation blind spots.**
+  - Fidelity checks reuse that same first batch.
+  - Record counts must match exactly, so records dropped on purpose by a transform hook count
+    as a failure.
+  - Multivectors aren't compared.
+- **Existing target collections are used as-is**, with only a warning. If their schema doesn't
+  match the plan, records fail one by one into the dead-letter file.
+- **One-shot copy only.** Points deleted or updated in the source during or after a run are not
+  brought across.
+
+### Phase 0: Foundation
+
+- [ ] CI (GitHub Actions): ruff, unit tests, and an integration job with Qdrant and Weaviate as
+      service containers.
+- [ ] Validation fixes:
+  - [ ] Compare counts as `target == source - skipped`, using checkpoint stats. Dead-lettered
+        records still fail validation.
+  - [ ] Compare multivectors.
+  - [ ] Report results per check, not just one pass/fail.
+- [ ] Check existing collections: compare an existing target's properties and vector configs with
+      the plan. Missing properties or incompatible types become gaps that stop the run.
+- [ ] `--json` output for `run`, `validate` and `status`, so CI pipelines can gate a cutover on
+      the result.
+
+### Phase 1: No quiet data loss
+
+- [ ] Sample from spread-out ID positions across the collection for planning and validation.
+      Add `sample: full` to scan the whole collection when complete coverage matters more than
+      speed.
+- [ ] Optional `schema_evolution: add`: when a write fails because a property is missing, infer
+      its type, add it to the target collection, and retry. Off by default.
+- [ ] `vmigrate replay RUN_ID`: re-run dead-lettered records through the current mapping, for
+      example after fixing a rename or type override.
+
+### Phase 2: Throughput
+
+- [ ] Parallel Qdrant reads. Qdrant can't filter scrolls by ID range, but scroll results come
+      back in ID order. So:
+  - Pick N-1 split IDs by sampling.
+  - Start worker *i* at `offset = split[i]`.
+  - Have it stop when it reaches `split[i+1]`.
+
+  The existing per-shard checkpoints handle resume without changes. Collections that use custom
+  shard keys can use `shard_key_selector` instead.
+- [ ] Overlap reads and writes: a bounded queue between the reader and writer in each shard.
+- [ ] Back-pressure: shrink batch size on 429s or timeouts, and grow it again when writes succeed.
+- [ ] Benchmark script (1M synthetic points) that records points per second for each change.
+
+### Phase 3: Migrating while the source keeps changing
+
+- [ ] `vmigrate sync --since TS`: re-migrate only points changed since the last run, using an
+      `updated_at`-style payload field. Upserts make this safe to repeat.
+- [ ] Deletion check: compare source and target ID sets and delete orphaned target objects.
+      `--dry-run` only reports them.
+- [ ] Cutover runbook: full copy, then catch-up passes, then freeze writes, then a final sync,
+      `validate` and switching reads over. Also document writing to both databases during the
+      switch as an alternative.
+
+### Phase 4: Index settings and tenancy
+
+- [ ] Copy HNSW settings: Qdrant `m` / `ef_construct` → Weaviate `maxConnections` /
+      `efConstruction`.
+- [ ] Map Qdrant quantization to Weaviate: scalar → SQ, product → PQ, binary → BQ. Add a planner
+      warning where there's no exact match.
+- [ ] Multi-tenancy: `tenant_from: <payload field>` creates Weaviate tenants and routes each
+      record to its tenant.
+
+### Phase 5: More adapters
+
+- [ ] Shared adapter test suite that every Source and Sink must pass: resume after a crash, the
+      empty-collection contract, idempotent upserts.
+- [ ] Qdrant as a target, which allows Qdrant → Weaviate → Qdrant round-trip tests.
+- [ ] Sources: pgvector, Pinecone, Milvus.
+
+### Throughout: running it in practice
+
+- [ ] Progress bar with an ETA (the total is known from `count`).
+- [ ] JSON logs.
+- [ ] Prometheus gauges for each shard's progress and for retries.
+- [ ] Docker image, and PyPI releases with the optional database extras.
+
+### Order
+
+Phase 0 → 1 → 2 is the critical path: trustworthy validation first, then no quiet data loss,
+then speed. Phase 3 is only needed when the source has to stay live during the migration.
+Otherwise go to Phase 4.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks,
+architecture rules and how to add an adapter.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
