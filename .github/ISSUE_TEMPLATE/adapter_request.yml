@@ -1,0 +1,39 @@
+name: Database adapter request
+description: Ask for a new source or target database.
+labels: [adapter]
+body:
+  - type: input
+    id: database
+    attributes:
+      label: Database
+      placeholder: "e.g. pgvector, Pinecone, Milvus, Elasticsearch"
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Direction
+      options:
+        - Source (migrate from it)
+        - Target (migrate to it)
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: Which pair do you need (e.g. pgvector → Weaviate), and roughly how much data?
+    validations:
+      required: true
+  - type: textarea
+    id: features
+    attributes:
+      label: Features that must carry over
+      description: Named vectors, multivectors, sparse vectors, filters, multi-tenancy, index settings…
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to implement this myself (see CONTRIBUTING.md, "Adding a database adapter")

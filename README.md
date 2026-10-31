@@ -1,5 +1,8 @@
 # vmigrate
 
+[![CI](https://github.com/vanalex/vmigrate/actions/workflows/ci.yml/badge.svg)](https://github.com/vanalex/vmigrate/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Pluggable vector database migration tool. First pair: **Qdrant → Weaviate**.
 
 - Idempotent and resumable: deterministic UUIDs + upserts, SQLite checkpoints per shard
@@ -103,8 +106,8 @@ docker compose up -d && uv run pytest -m integration   # real Qdrant -> Weaviate
 
 ### Phase 0: Foundation
 
-- [ ] CI (GitHub Actions): ruff, unit tests, and an integration job with Qdrant and Weaviate as
-      service containers.
+- [x] CI (GitHub Actions): ruff, unit tests on Python 3.11 and 3.12, and an integration job
+      against the docker compose Qdrant + Weaviate stack.
 - [ ] Validation fixes:
   - [ ] Compare counts as `target == source - skipped`, using checkpoint stats. Dead-lettered
         records still fail validation.
@@ -181,7 +184,8 @@ Otherwise go to Phase 4.
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks,
-architecture rules and how to add an adapter.
+architecture rules and how to add an adapter, and the [code of conduct](CODE_OF_CONDUCT.md).
+Report security issues privately as described in [SECURITY.md](SECURITY.md).
 
 ## License
 

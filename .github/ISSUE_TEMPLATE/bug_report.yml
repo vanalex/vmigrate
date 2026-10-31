@@ -1,0 +1,44 @@
+name: Bug report
+description: Something went wrong during plan, run, resume or validate.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please remove credentials and any sensitive payload data before
+        posting. Dead-letter files contain full records.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you ran, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and output
+      description: The vmigrate command and its output (plan / run / validate). `--json` output is welcome.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config (redacted)
+      description: The relevant part of migrate.yaml, without URLs or API keys.
+      render: yaml
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: vmigrate, Python, source and target database server versions.
+      placeholder: "vmigrate 0.1.0, Python 3.12, Qdrant 1.13.4, Weaviate 1.30.0"
+    validations:
+      required: true
+  - type: textarea
+    id: deadletter
+    attributes:
+      label: Dead-letter errors
+      description: If records failed, the `error` field of a few lines from `.vmigrate/deadletter/<run_id>/`.
+      render: text
