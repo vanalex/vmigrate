@@ -1,7 +1,7 @@
 # Local Qdrant + Weaviate for integration tests and trial migrations.
 services:
   qdrant:
-    image: qdrant/qdrant:v1.13.4
+    image: qdrant/qdrant:v1.20.0
     ports:
       - "6333:6333"
       - "6334:6334"
