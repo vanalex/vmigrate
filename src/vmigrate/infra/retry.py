@@ -27,6 +27,8 @@ def retry(
             if attempt == attempts:
                 raise
             delay = min(max_delay, base_delay * 2 ** (attempt - 1)) * random.uniform(0.5, 1.0)
-            log.warning("attempt %d/%d failed: %s; retrying in %.2fs", attempt, attempts, exc, delay)
+            log.warning(
+                "attempt %d/%d failed: %s; retrying in %.2fs", attempt, attempts, exc, delay
+            )
             sleep(delay)
     raise AssertionError("unreachable")

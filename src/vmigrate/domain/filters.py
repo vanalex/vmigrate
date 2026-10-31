@@ -55,7 +55,7 @@ def parse_filter(obj: dict[str, Any]) -> FilterExpr:
     """
     if len(obj) != 1:
         raise ValueError(f"filter node must have exactly one key, got {sorted(obj)}")
-    (kind, body), = obj.items()
+    ((kind, body),) = obj.items()
     if kind == "and":
         return And(tuple(parse_filter(i) for i in body))
     if kind == "or":

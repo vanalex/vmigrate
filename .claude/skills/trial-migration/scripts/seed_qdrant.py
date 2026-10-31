@@ -30,8 +30,10 @@ def payload(i: int, n: int, late: int, rng: random.Random) -> dict:
         "created_at": (datetime(2024, 1, 1, tzinfo=UTC) + timedelta(hours=i)).isoformat(),
         "tags": rng.sample(["a", "b", "c", "d"], k=1 + i % 3),
         "meta": {"pages": 1 + i % 40, "source": "trial"},
-        "location": {"lat": round(40 + rng.uniform(-1, 1), 5),
-                     "lon": round(-3.7 + rng.uniform(-1, 1), 5)},
+        "location": {
+            "lat": round(40 + rng.uniform(-1, 1), 5),
+            "lon": round(-3.7 + rng.uniform(-1, 1), 5),
+        },
     }
     if i > n - late:
         p["late_note"] = f"only on late points ({i})"
@@ -44,8 +46,12 @@ def main() -> None:
     ap.add_argument("--collection", default="trial_docs")
     ap.add_argument("--points", type=int, default=1000)
     ap.add_argument("--dim", type=int, default=8)
-    ap.add_argument("--late", type=int, default=50,
-                    help="number of final points that carry the late-appearing field")
+    ap.add_argument(
+        "--late",
+        type=int,
+        default=50,
+        help="number of final points that carry the late-appearing field",
+    )
     ap.add_argument("--no-sparse", action="store_true")
     ap.add_argument("--no-multivector", action="store_true")
     ap.add_argument("--golden", type=Path, help="write golden queries JSONL here")
@@ -69,8 +75,7 @@ def main() -> None:
 
     if client.collection_exists(args.collection):
         client.delete_collection(args.collection)
-    client.create_collection(args.collection, vectors_config=vectors,
-                             sparse_vectors_config=sparse)
+    client.create_collection(args.collection, vectors_config=vectors, sparse_vectors_config=sparse)
     client.create_payload_index(args.collection, "score", models.PayloadSchemaType.FLOAT)
     client.create_payload_index(args.collection, "lang", models.PayloadSchemaType.KEYWORD)
 
@@ -82,8 +87,9 @@ def main() -> None:
         if not args.no_sparse:
             idx = sorted(rng.sample(range(1000), k=5))
             v["bm25"] = models.SparseVector(indices=idx, values=[rng.random() for _ in idx])
-        batch.append(models.PointStruct(id=i, vector=v,
-                                        payload=payload(i, args.points, args.late, rng)))
+        batch.append(
+            models.PointStruct(id=i, vector=v, payload=payload(i, args.points, args.late, rng))
+        )
         if len(batch) == 500:
             client.upsert(args.collection, batch, wait=True)
             batch = []
@@ -91,8 +97,10 @@ def main() -> None:
         client.upsert(args.collection, batch, wait=True)
 
     count = client.count(args.collection, exact=True).count
-    print(f"seeded {args.collection}: {count} points "
-          f"(late field on last {min(args.late, args.points)})")
+    print(
+        f"seeded {args.collection}: {count} points "
+        f"(late field on last {min(args.late, args.points)})"
+    )
 
     if args.golden:
         args.golden.parent.mkdir(parents=True, exist_ok=True)

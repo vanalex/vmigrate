@@ -75,7 +75,8 @@ def test_read_pages_through_everything_and_resumes(qdrant):
 def test_fetch_and_search(qdrant):
     src = QdrantSource(client=qdrant)
     assert {str(r.source_id) for r in src.fetch("docs", ["3", str(uuid.UUID(int=4))])} == {
-        "3", str(uuid.UUID(int=4))
+        "3",
+        str(uuid.UUID(int=4)),
     }
     hits = src.search("docs", Query([3.0, 1.0, 0.0, 0.5], "dense", 3, Match("kind", "odd")))
     assert hits[0].id == "3" and len(hits) == 3

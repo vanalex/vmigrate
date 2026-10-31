@@ -100,8 +100,10 @@ def run(
             f"failed={s.failed} skipped={s.skipped}"
         )
     if any(col.stats.failed for col in report.collections):
-        typer.secho(f"  failed records in {cfg.state.deadletter_dir / report.run_id}",
-                    fg=typer.colors.YELLOW)
+        typer.secho(
+            f"  failed records in {cfg.state.deadletter_dir / report.run_id}",
+            fg=typer.colors.YELLOW,
+        )
 
 
 @app.command()
@@ -117,14 +119,19 @@ def validate(
     with build(cfg) as c:
         results = [c.validate.execute(m, queries) for m in cfg.mappings(_split(collections))]
     if as_json:
-        typer.echo(json.dumps(
-            [{**dataclasses.asdict(r), "passed": r.passed} for r in results], indent=2, default=str
-        ))
+        typer.echo(
+            json.dumps(
+                [{**dataclasses.asdict(r), "passed": r.passed} for r in results],
+                indent=2,
+                default=str,
+            )
+        )
     else:
         for r in results:
             color = typer.colors.GREEN if r.passed else typer.colors.RED
-            typer.secho(f"\n{r.source} -> {r.target}: {'PASS' if r.passed else 'FAIL'}",
-                        fg=color, bold=True)
+            typer.secho(
+                f"\n{r.source} -> {r.target}: {'PASS' if r.passed else 'FAIL'}", fg=color, bold=True
+            )
             typer.echo(f"  count        {r.source_count} -> {r.target_count}")
             f = r.fidelity
             typer.echo(

@@ -19,8 +19,9 @@ from vmigrate.domain.parity import cosine
 
 
 class MemorySource:
-    def __init__(self, collections: dict[str, tuple[CollectionSpec, list[Record]]] | None = None,
-                 **_: object):
+    def __init__(
+        self, collections: dict[str, tuple[CollectionSpec, list[Record]]] | None = None, **_: object
+    ):
         self.collections = collections or {}
 
     def describe(self, collection: str) -> CollectionSpec:
@@ -34,11 +35,13 @@ class MemorySource:
         n = max(1, min(parallelism, total))
         step = -(-total // n)  # ceil
         # Shard name encodes its [start, end) range so a resume reads the same slice.
-        return [Cursor(shard=f"{s}-{min(s + step, total)}", value=s) for s in range(0, total, step)] \
-            or [Cursor(shard="0-0", value=0)]
+        return [
+            Cursor(shard=f"{s}-{min(s + step, total)}", value=s) for s in range(0, total, step)
+        ] or [Cursor(shard="0-0", value=0)]
 
-    def read(self, collection: str, cursor: Cursor, batch_size: int
-             ) -> Iterator[tuple[list[Record], Cursor]]:
+    def read(
+        self, collection: str, cursor: Cursor, batch_size: int
+    ) -> Iterator[tuple[list[Record], Cursor]]:
         records = self.collections[collection][1]
         start, end = (int(x) for x in cursor.shard.split("-"))
         pos = start if cursor.value is None else cursor.value
@@ -52,8 +55,9 @@ class MemorySource:
 
     def fetch(self, collection: str, source_ids: list[str]) -> list[Record]:
         wanted = set(source_ids)
-        return [copy.deepcopy(r) for r in self.collections[collection][1]
-                if str(r.source_id) in wanted]
+        return [
+            copy.deepcopy(r) for r in self.collections[collection][1] if str(r.source_id) in wanted
+        ]
 
     def search(self, collection: str, query: Query) -> list[Hit]:
         return _brute_force(self.collections[collection][1], query, lambda r: str(r.source_id))

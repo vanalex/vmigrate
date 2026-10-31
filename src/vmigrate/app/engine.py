@@ -61,8 +61,9 @@ class PipelineEngine:
                 pending.append(saved.cursor)
 
         done = sum(1 for p in progress.values() if p.cursor.done)
-        log.info("%s -> %s: %d shard(s) pending, %d done", mapping.source, target,
-                 len(pending), done)
+        log.info(
+            "%s -> %s: %d shard(s) pending, %d done", mapping.source, target, len(pending), done
+        )
         run_parallel(
             lambda cursor: self._run_shard(run_id, mapping, target, chain, cursor),
             pending,
@@ -97,8 +98,9 @@ class PipelineEngine:
         self, run_id: str, collection: str, target: str, records: list[Record]
     ) -> tuple[int, int]:
         attempts = self._settings.max_retries
-        result = retry(lambda: self._sink.write(target, records), attempts=attempts,
-                       sleep=self._sleep)
+        result = retry(
+            lambda: self._sink.write(target, records), attempts=attempts, sleep=self._sleep
+        )
         written, failures = result.written, result.failures
 
         # Per-record failures are often transient too (e.g. timeouts); retry just those.

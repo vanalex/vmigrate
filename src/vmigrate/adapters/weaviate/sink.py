@@ -58,7 +58,9 @@ class WeaviateSink:
     def check(self, plan: SchemaPlan) -> list[str]:
         warnings = check_plan(plan, self._client.get_meta()["version"])
         if self._client.collections.exists(plan.target):
-            warnings.append(f"collection '{plan.target}' already exists; its schema is reused as is")
+            warnings.append(
+                f"collection '{plan.target}' already exists; its schema is reused as is"
+            )
         return warnings
 
     def ensure_collection(self, plan: SchemaPlan) -> None:
