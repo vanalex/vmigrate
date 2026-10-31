@@ -1,7 +1,8 @@
 # Contributing to vmigrate
 
 Thanks for helping! vmigrate is early: Qdrant → Weaviate works, and much of what's left is
-listed in the [Roadmap](README.md#roadmap). Issues and pull requests are welcome, especially
+listed in the [Roadmap](README.md#roadmap). Please follow the
+[code of conduct](CODE_OF_CONDUCT.md). Issues and pull requests are welcome, especially
 for roadmap items and new database adapters.
 
 ## Setup
@@ -16,7 +17,8 @@ uv sync                    # Python 3.12 (see .python-version), runtime + dev de
 
 ## Checks
 
-Run these before opening a pull request:
+CI runs all of these on every pull request, and they must pass before merging into `main`.
+Run them locally before opening a pull request:
 
 ```bash
 uv run ruff check .        # lint (line length 100)
