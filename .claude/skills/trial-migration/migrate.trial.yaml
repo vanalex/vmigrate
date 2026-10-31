@@ -1,0 +1,34 @@
+# Trial config for the trial-migration skill. Copy to .vmigrate/trial/migrate.yaml.
+source:
+  type: qdrant
+  url: http://localhost:6333
+
+target:
+  type: weaviate
+  url: http://localhost:8080
+  grpc_port: 50051
+
+defaults:
+  batch_size: 200
+  workers: 4
+  max_retries: 2
+  on_error: deadletter
+  sample_size: 200
+
+state:
+  checkpoint_path: .vmigrate/trial/state.db
+  deadletter_dir: .vmigrate/trial/deadletter
+
+collections:
+  - source: trial_docs
+    target: TrialDocs
+    ids:
+      keep_source_id_as: qdrant_id
+    vectors:
+      text: text
+      colbert: colbert
+    sparse: drop
+    properties:
+      created_at: { type: date }
+    rename:
+      user-id: userId
