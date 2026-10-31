@@ -34,9 +34,7 @@ def plan_schema(
 
     vectors: list[VectorSpec] = []
     for v in spec.vectors:
-        vectors.append(
-            VectorSpec(mapping.target_vector(v.name), v.size, v.distance, v.multivector)
-        )
+        vectors.append(VectorSpec(mapping.target_vector(v.name), v.size, v.distance, v.multivector))
         if v.distance is Distance.EUCLID:
             warnings.append(
                 f"vector '{v.name or 'default'}': euclid -> l2-squared, scores change scale "

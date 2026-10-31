@@ -12,8 +12,16 @@ from vmigrate.domain.type_inference import infer_properties
 def test_infer_scalars_arrays_objects_geo_and_widening():
     props, warnings = infer_properties(
         [
-            {"i": 1, "f": 1, "b": True, "d": datetime(2024, 1, 1), "tags": ["x"],
-             "geo": {"latitude": 1.0, "longitude": 2.0}, "obj": {"a": 1}, "objs": [{"k": "v"}]},
+            {
+                "i": 1,
+                "f": 1,
+                "b": True,
+                "d": datetime(2024, 1, 1),
+                "tags": ["x"],
+                "geo": {"latitude": 1.0, "longitude": 2.0},
+                "obj": {"a": 1},
+                "objs": [{"k": "v"}],
+            },
             {"f": 2.5, "mixed": 1},
             {"mixed": "s", "empty": {}},
         ]
@@ -34,8 +42,12 @@ def test_infer_scalars_arrays_objects_geo_and_widening():
 
 def test_plan_schema_end_to_end():
     mapping = CollectionMapping(
-        "docs", "docs", rename={"user-id": "userId"}, property_types={"title": T.TEXT},
-        sparse=SparsePolicy.DROP, keep_source_id_as="qdrant_id",
+        "docs",
+        "docs",
+        rename={"user-id": "userId"},
+        property_types={"title": T.TEXT},
+        sparse=SparsePolicy.DROP,
+        keep_source_id_as="qdrant_id",
     )
     spec = make_spec(count=10, sparse=True)
     samples = apply_chain(build_chain(mapping), make_records(10))

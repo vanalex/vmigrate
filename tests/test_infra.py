@@ -37,8 +37,14 @@ def test_retry_backs_off_then_succeeds():
 
 
 def test_filter_parse_and_rename():
-    expr = parse_filter({"and": [{"match": {"field": "user-id", "value": 1}},
-                                 {"range": {"field": "score", "gte": 0.5}}]})
+    expr = parse_filter(
+        {
+            "and": [
+                {"match": {"field": "user-id", "value": 1}},
+                {"range": {"field": "score", "gte": 0.5}},
+            ]
+        }
+    )
     assert expr == And((Match("user-id", 1), Range("score", gte=0.5)))
     renamed = rename_fields(expr, lambda f: f.replace("-", "_"))
     assert renamed.items[0] == Match("user_id", 1)

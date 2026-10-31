@@ -99,9 +99,12 @@ class SqliteCheckpointStore:
     def shards(self, run_id: str) -> list[tuple[str, str, ShardProgress]]:
         """(collection, shard, progress) for every shard of a run, for status reporting."""
         with self._lock:
-            collections = [r[0] for r in self._conn.execute(
-                "SELECT DISTINCT collection FROM shards WHERE run_id=?", (run_id,)
-            )]
+            collections = [
+                r[0]
+                for r in self._conn.execute(
+                    "SELECT DISTINCT collection FROM shards WHERE run_id=?", (run_id,)
+                )
+            ]
         return [
             (c, shard, progress)
             for c in collections
@@ -120,8 +123,16 @@ class SqliteCheckpointStore:
                     updated_at=excluded.updated_at
                 """,
                 (
-                    run_id, collection, cursor.shard, json.dumps(cursor.value), int(cursor.done),
-                    delta.read, delta.written, delta.failed, delta.skipped, _now(),
+                    run_id,
+                    collection,
+                    cursor.shard,
+                    json.dumps(cursor.value),
+                    int(cursor.done),
+                    delta.read,
+                    delta.written,
+                    delta.failed,
+                    delta.skipped,
+                    _now(),
                 ),
             )
 

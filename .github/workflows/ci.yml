@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check --output-format=github .
+      - run: uv run ruff format --check .
+
+  test:
+    name: Unit tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked
+      - run: uv run pytest -q
+
+  integration:
+    name: Integration tests (Qdrant -> Weaviate)
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+
+      # Same stack as local development, so image versions live only in docker-compose.yml.
+      - name: Start Qdrant and Weaviate
+        run: docker compose up -d
+      - name: Wait for both services
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS localhost:6333/readyz >/dev/null 2>&1 \
+              && curl -fsS localhost:8080/v1/.well-known/ready >/dev/null 2>&1; then
+              echo "ready after $((i * 2))s"; exit 0
+            fi
+            sleep 2
+          done
+          echo "services did not become ready" >&2
+          exit 1
+
+      - run: uv run pytest -m integration -v
+
+      - name: Service logs
+        if: failure()
+        run: docker compose logs --tail 100
+      - name: Stop services
+        if: always()
+        run: docker compose down
